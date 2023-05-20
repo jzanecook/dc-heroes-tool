@@ -1,0 +1,12 @@
+appId: com.z90.dcheroes
+productName: DC Heroes Tool
+copyright: Copyright © 2023 Z90 Studios
+directories:
+  output: dist
+  buildResources: resources
+files:
+  - from: .
+    filter:
+      - package.json
+      - app
+publish: null
