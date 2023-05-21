@@ -1,4 +1,4 @@
-import { app } from 'electron';
+import { app, ipcMain } from 'electron';
 import serve from 'electron-serve';
 import { createWindow } from './helpers';
 
@@ -17,6 +17,26 @@ if (isProd) {
     width: 1000,
     height: 600,
     frame: false,
+    webPreferences: {
+      nodeIntegration: true,
+    },
+  });
+
+  ipcMain.on('minimize', () => {
+    mainWindow.minimize();
+  });
+
+  ipcMain.on('maximize', () => {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  });
+
+  ipcMain.on('close', () => {
+    console.log('minimize');
+    mainWindow.close();
   });
 
   if (isProd) {

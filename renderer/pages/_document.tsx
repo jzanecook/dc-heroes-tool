@@ -1,61 +1,10 @@
 import React from "react";
 import Document, { Head, Html, Main, NextScript } from "next/document";
-import Button from '@mui/material/Button';
+import Button from "@mui/material/Button";
 import theme from "../lib/theme";
 import createEmotionCache from "../lib/create-emotion-cache";
 import createEmotionServer from "@emotion/server/create-instance";
-import type * as CSS from 'csstype';
 
-interface ExtraCSSTypes extends CSS.Properties {
-  WebkitAppRegion?: string;
-}
-
-const titlebarStyle: ExtraCSSTypes = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "1.5rem",
-  backgroundColor: "#000",
-  color: "#fff",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "0.75rem",
-  zIndex: 1000,
-  WebkitAppRegion: "drag",
-}
-
-const TitleBar = () => (
-  <div style={titlebarStyle}>
-    <span>DC Heroes Tool - Version Z.0.1</span>
-    <Button sx={{
-      position: "absolute",
-      top: 0,
-      right: 0,
-      width: "1.5rem",
-      minWidth: 'unset',
-      borderRadius: 0,
-      height: "1.5rem",
-      backgroundColor: "#000",
-      color: "#fff",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "0.75rem",
-      zIndex: 1000,
-      WebkitAppRegion: "no-drag",
-      padding: 0,
-      '&:hover': {
-        backgroundColor: 'rgba(255, 255, 255, 0.12)',
-      }
-    }} onClick={() => {
-      const remote = (window.require) ? window.require('electron').remote : null;
-      const WIN = remote.getCurrentWindow();
-      WIN.close();
-    }}>X</Button>
-  </div>
-)
 
 export default class MyDocument extends Document {
   render() {
@@ -70,7 +19,6 @@ export default class MyDocument extends Document {
           />
         </Head>
         <body>
-          <TitleBar />
           <Main />
           <NextScript />
         </body>

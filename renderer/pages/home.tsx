@@ -16,15 +16,129 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
+import electron from "electron";
 // import Link from '../components/Link';
 import { styled } from "@mui/material";
 
 const Root = styled("div")(({ theme }) => {
   return {
     textAlign: "center",
-    paddingTop: theme.spacing(4),
+    marginTop: "calc(2rem + 1px)",
   };
 });
+
+import type * as CSS from "csstype";
+
+interface ExtraCSSTypes extends CSS.Properties {
+  WebkitAppRegion?: string;
+  "&:hover"?: CSS.Properties;
+}
+
+const titlebarStyle: ExtraCSSTypes = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "2rem",
+  backgroundColor: "#12121260",
+  backdropFilter: "blur(4px)",
+  color: "#fff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "0.75rem",
+  zIndex: 1,
+  WebkitAppRegion: "drag",
+  "&:hover": {
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+  },
+};
+
+const TitleBar = () => (
+  <div style={titlebarStyle}>
+    <Typography variant="body2">DC Heroes Tool - Version Z.0.1</Typography>
+    <Stack
+      direction="row"
+      sx={{
+        position: "absolute",
+        top: 0,
+        right: 0,
+        zIndex: 1,
+        WebkitAppRegion: "no-drag",
+      }}
+    >
+      <Button
+        sx={{
+          width: "2rem",
+          minWidth: "unset",
+          borderRadius: 0,
+          height: "2rem",
+          backgroundColor: "transparent",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "0.75rem",
+          padding: 0,
+        }}
+        onClick={() => {
+          const ipcRenderer = electron.ipcRenderer || false;
+          if (ipcRenderer) {
+            ipcRenderer.send("minimize");
+          }
+        }}
+      >
+        🗕
+      </Button>
+      <Button
+        sx={{
+          width: "2rem",
+          minWidth: "unset",
+          borderRadius: 0,
+          height: "2rem",
+          backgroundColor: "transparent",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "0.75rem",
+          padding: 0,
+        }}
+        onClick={() => {
+          const ipcRenderer = electron.ipcRenderer || false;
+          if (ipcRenderer) {
+            ipcRenderer.send("maximize");
+          }
+        }}
+      >
+        🗖
+      </Button>
+      <Button
+        sx={{
+          width: "2rem",
+          minWidth: "unset",
+          borderRadius: 0,
+          height: "2rem",
+          backgroundColor: "transparent",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "0.75rem",
+          padding: 0,
+        }}
+        onClick={() => {
+          const ipcRenderer = electron.ipcRenderer || false;
+          if (ipcRenderer) {
+            ipcRenderer.send("close");
+          }
+        }}
+      >
+        X
+      </Button>
+    </Stack>
+  </div>
+);
 
 function Home() {
   const [open, setOpen] = React.useState(false);
@@ -157,15 +271,41 @@ function Home() {
 
     const opposingRollThreshold =
       StandardGroups[getOpposingValueIndex(OpposingValue)].values;
+
+    const actionTableValue = getActionTableCellValue(
+      getOpposingValueIndex(OpposingValue),
+      getActingValueIndex(ActingValue)
+    );
+
+    const upwardValuesTweaked = [11, ...upwardValues].filter(
+      (v) => v >= actionTableValue
+    );
+
+    const above = upwardValuesTweaked.filter(
+      (v, i, a) =>
+        v >= ActingRoll || (i < a.length - 1 ? ActingRoll < a[i + 1] : true)
+    );
+
+    if (ActingRoll < actionTableValue) {
+      return -1;
+    }
+
     console.log({
       OpposingValue,
       getOpposingValueIndex: getOpposingValueIndex(OpposingValue),
       opposingRollThreshold,
+      actionTableValue,
+      upwardValuesTweaked,
+      upwardValues,
+      above,
+      experimentalRAPs: upwardValuesTweaked.length - above.length,
     });
 
     if (ActingValue > 60 || OpposingValue > 60) {
       return 9999;
     }
+
+    return upwardValuesTweaked.length - above.length;
 
     return isNaN(actingRollIndex)
       ? opposingRollThreshold.includes(ActingRoll)
@@ -198,13 +338,13 @@ function Home() {
     }
 
     if (ResistanceValue === 0) {
-      return `A + ${RAPs}`;
+      return `A + ${RAPs} (${EffectValue + RAPs})})`;
     }
 
     return resistanceIndex - RAPs === 0
       ? "A"
       : resistanceIndex - RAPs < 0
-      ? `A + ${Math.abs(resistanceIndex - RAPs)}`
+      ? `A + ${Math.abs(resistanceIndex - RAPs)} (${EffectValue + Math.abs(resistanceIndex - RAPs)})`
       : ResultTableGroups[effectIndex].values[resistanceIndex - RAPs - 1] ??
         "N";
 
@@ -441,12 +581,10 @@ function Home() {
       </Head>
       <Root
         sx={{
-          maxHeight: "calc(100vh - 1.5rem)",
+          maxHeight: "calc(100vh - 2rem - 1px)",
           overflowY: "scroll",
-          marginTop: "1.5rem",
           "&::-webkit-scrollbar": {
-            width: "0.4em",
-            paddingTop: "0.5rem",
+            width: "0.6em",
           },
           "&::-webkit-scrollbar-track": {
             boxShadow: "inset 0 0 6px rgba(0,0,0,0.00)",
@@ -455,14 +593,12 @@ function Home() {
           "&::-webkit-scrollbar-thumb": {
             backgroundColor: "rgba(255, 255, 255, 0.12)",
             outline: "1px solid slategrey",
-            borderTopLeftRadius: "4px",
-            borderBottomLeftRadius: "4px",
           },
         }}
       >
+        <TitleBar />
         <div
           style={{
-            content: "",
             position: "absolute",
             top: 0,
             right: 0,
@@ -495,58 +631,76 @@ function Home() {
           spacing={1}
           justifyContent="center"
           alignItems="center"
+          sx={{}}
         >
-          <Stack direction={{ md: "column", lg: "row" }} spacing={2}>
+          <Stack direction="column" spacing={2}>
             <Stack direction="column" spacing={1} width={1} p={2}>
-              <Stack direction="column" spacing={1} width={1}>
+              <Stack
+                direction={{ md: "column", lg: "row" }}
+                spacing={1}
+                width={1}
+              >
                 <Paper>
-                  <Stack direction="column" spacing={1} width={1} p={1}>
-                    <Typography variant="subtitle1">
-                      Action Table Values
-                    </Typography>
-                    <TextField
-                      id="ActingValue"
-                      label="Acting Value"
-                      type="number"
-                      size="small"
-                      value={ActingValue}
-                      onChange={(e) => setActingValue(parseInt(e.target.value))}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
-                    <TextField
-                      id="OpposingValue"
-                      label="Opposing Value"
-                      type="number"
-                      size="small"
-                      value={OpposingValue}
-                      onChange={(e) =>
-                        setOpposingValue(parseInt(e.target.value))
-                      }
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
-                    <TextField
-                      id="ActingValue"
-                      label="Acting Roll"
-                      type="number"
-                      size="small"
-                      value={ActingRoll}
-                      onChange={(e) => setActingRoll(parseInt(e.target.value))}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
+                  <Stack
+                    direction="column"
+                    justifyContent="space-between"
+                    spacing={2}
+                    width={1}
+                    p={1}
+                  >
+                    <Stack direction="column" spacing={1} sx={{ flexGrow: 1 }}>
+                      <Typography variant="subtitle1">
+                        Action Table Values
+                      </Typography>
+                      <TextField
+                        id="ActingValue"
+                        label="Acting Value"
+                        type="number"
+                        size="small"
+                        value={ActingValue}
+                        onChange={(e) =>
+                          setActingValue(parseInt(e.target.value))
+                        }
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+                      <TextField
+                        id="OpposingValue"
+                        label="Opposing Value"
+                        type="number"
+                        size="small"
+                        value={OpposingValue}
+                        onChange={(e) =>
+                          setOpposingValue(parseInt(e.target.value))
+                        }
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+                      <TextField
+                        id="ActingValue"
+                        label="Acting Roll"
+                        type="number"
+                        size="small"
+                        value={ActingRoll}
+                        onChange={(e) =>
+                          setActingRoll(parseInt(e.target.value))
+                        }
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+                    </Stack>
                     <Stack direction="column" spacing={1} width={1}>
                       <Stack
                         direction="row"
-                        spacing={1}
+                        spacing={6}
+                        width={1}
+                        justifyContent="center"
+                        alignItems="center"
                         sx={{
                           flex: 1,
-                          justifyContent: "space-between",
-                          maxWidth: 200,
                         }}
                       >
                         {getActingRollRAPs() === 9999 ? (
@@ -570,19 +724,19 @@ function Home() {
                           </Typography>
                         ) : getActingRollRAPs() === -1 ? (
                           <>
-                            <Typography variant="body2" gutterBottom>
+                            <Typography variant="h5" gutterBottom>
                               Acting RAPs
                             </Typography>
-                            <Typography variant="body2" gutterBottom>
+                            <Typography variant="h4" gutterBottom>
                               Failure
                             </Typography>
                           </>
                         ) : (
                           <>
-                            <Typography variant="body2" gutterBottom>
+                            <Typography variant="h5" gutterBottom>
                               Acting RAPs
                             </Typography>
-                            <Typography variant="body2" gutterBottom>
+                            <Typography variant="h4" gutterBottom>
                               {getActingRollRAPs()}
                             </Typography>
                           </>
@@ -592,42 +746,54 @@ function Home() {
                   </Stack>
                 </Paper>
                 <Paper>
-                  <Stack direction="column" spacing={1} width={1} p={1}>
-                    <Typography variant="subtitle1">
-                      Result Table Values
-                    </Typography>
-                    <TextField
-                      id="EffectValue"
-                      label="Effect Value"
-                      type="number"
-                      size="small"
-                      value={EffectValue}
-                      onChange={(e) => setEffectValue(parseInt(e.target.value))}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
-                    <TextField
-                      id="ResistanceValue"
-                      label="Resistance Value"
-                      type="number"
-                      size="small"
-                      value={ResistanceValue}
-                      onChange={(e) =>
-                        setResistanceValue(parseInt(e.target.value))
-                      }
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
+                  <Stack
+                    direction="column"
+                    justifyContent="space-between"
+                    spacing={2}
+                    width={1}
+                    p={1}
+                    flex={1}
+                  >
+                    <Stack direction="column" spacing={1} sx={{ flexGrow: 1 }}>
+                      <Typography variant="subtitle1">
+                        Result Table Values
+                      </Typography>
+                      <TextField
+                        id="EffectValue"
+                        label="Effect Value"
+                        type="number"
+                        size="small"
+                        value={EffectValue}
+                        onChange={(e) =>
+                          setEffectValue(parseInt(e.target.value))
+                        }
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+                      <TextField
+                        id="ResistanceValue"
+                        label="Resistance Value"
+                        type="number"
+                        size="small"
+                        value={ResistanceValue}
+                        onChange={(e) =>
+                          setResistanceValue(parseInt(e.target.value))
+                        }
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+                    </Stack>
                     <Stack
-                      direction="row"
-                      spacing={1}
-                      sx={{
-                        flex: 1,
-                        justifyContent: "space-between",
-                        maxWidth: 200,
-                      }}
+                        direction="row"
+                        spacing={6}
+                        width={1}
+                        justifyContent="center"
+                        alignItems="center"
+                        sx={{
+                          flex: 1,
+                        }}
                     >
                       {getResultRollValue() === 9999 ? (
                         <Typography variant="body2" gutterBottom color="error">
@@ -636,19 +802,19 @@ function Home() {
                         </Typography>
                       ) : getResultRollValue() === -1 ? (
                         <>
-                          <Typography variant="body2" gutterBottom>
+                          <Typography variant="h5" gutterBottom>
                             Result Value
                           </Typography>
-                          <Typography variant="body2" gutterBottom>
+                          <Typography variant="h4" gutterBottom>
                             Failure
                           </Typography>
                         </>
                       ) : (
                         <>
-                          <Typography variant="body2" gutterBottom>
+                          <Typography variant="h5" gutterBottom>
                             Result Value
                           </Typography>
-                          <Typography variant="body2" gutterBottom>
+                          <Typography variant="h4" gutterBottom>
                             {getResultRollValue()}
                           </Typography>
                         </>
@@ -658,133 +824,135 @@ function Home() {
                 </Paper>
               </Stack>
             </Stack>
-            <Stack justifyContent="center" alignItems="center">
-              <Typography variant="h5" gutterBottom>
-                Action Table {/** !!! ACTION TABLE */}
-              </Typography>
-              <TableContainer
-                component={Paper}
-                sx={{ maxWidth: "min-content" }}
-              >
-                <Table
-                  sx={{ minWidth: 700, tableLayout: "fixed" }}
-                  aria-label="Acting Table"
-                  size="small"
-                  padding="none"
+            <Stack direction={{ md: "column", lg: "row" }} spacing={1}>
+              <Stack justifyContent="center" alignItems="center">
+                <Typography variant="h5" gutterBottom>
+                  Action Table {/** !!! ACTION TABLE */}
+                </Typography>
+                <TableContainer
+                  component={Paper}
+                  sx={{ maxWidth: "min-content" }}
                 >
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ width: "min-content" }}>
-                        &nbsp;
-                      </TableCell>
-                      {StandardGroups.map((group) => (
-                        <TableCell
-                          sx={{
-                            width: "min-content",
-                            backgroundColor: group.values.includes(
-                              OpposingValue
-                            )
-                              ? "rgba(255, 255, 255, 0.12)"
-                              : "transparent",
-                            alignItems: "center",
-                            justifyContent: "flex-end",
-                          }}
-                          key={`opposingValueHeader_${group.label}`}
-                          align="center"
-                        >
-                          <Stack direction="column" spacing={0}>
-                            {group.label
-                              .replace("-", " to ")
-                              .split(" ")
-                              .map((word) => (
-                                <Typography
-                                  variant="caption"
-                                  key={`opposingValueHeader_${group.label}_${word}`}
-                                  sx={{ fontWeight: "bold" }}
-                                >
-                                  {word}
-                                </Typography>
-                              ))}
-                          </Stack>
+                  <Table
+                    sx={{ minWidth: 700, tableLayout: "fixed" }}
+                    aria-label="Acting Table"
+                    size="small"
+                    padding="none"
+                  >
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ width: "min-content" }}>
+                          &nbsp;
                         </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {StandardGroups.map((_g, rowIndex) =>
-                      rowIndex === 0 ? null : getActionTableRow(rowIndex)
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Stack>
-            <Stack justifyContent="center" alignItems="center">
-              <Typography variant="h5" gutterBottom>
-                Result Table {/** !!! RESULT TABLE */}
-              </Typography>
-              <TableContainer
-                component={Paper}
-                sx={{ maxWidth: "min-content" }}
-              >
-                <Table
-                  sx={{ minWidth: 700, tableLayout: "fixed" }}
-                  aria-label="Result Table"
-                  size="small"
-                  padding="none"
+                        {StandardGroups.map((group) => (
+                          <TableCell
+                            sx={{
+                              width: "min-content",
+                              backgroundColor: group.values.includes(
+                                OpposingValue
+                              )
+                                ? "rgba(255, 255, 255, 0.12)"
+                                : "transparent",
+                              alignItems: "center",
+                              justifyContent: "flex-end",
+                            }}
+                            key={`opposingValueHeader_${group.label}`}
+                            align="center"
+                          >
+                            <Stack direction="column" spacing={0}>
+                              {group.label
+                                .replace("-", " to ")
+                                .split(" ")
+                                .map((word) => (
+                                  <Typography
+                                    variant="caption"
+                                    key={`opposingValueHeader_${group.label}_${word}`}
+                                    sx={{ fontWeight: "bold" }}
+                                  >
+                                    {word}
+                                  </Typography>
+                                ))}
+                            </Stack>
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {StandardGroups.map((_g, rowIndex) =>
+                        rowIndex === 0 ? null : getActionTableRow(rowIndex)
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Stack>
+              <Stack justifyContent="center" alignItems="center">
+                <Typography variant="h5" gutterBottom>
+                  Result Table {/** !!! RESULT TABLE */}
+                </Typography>
+                <TableContainer
+                  component={Paper}
+                  sx={{ maxWidth: "min-content" }}
                 >
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ width: "min-content" }}>
-                        &nbsp;
-                      </TableCell>
-                      <TableCell sx={{ width: "min-content" }} align="center">
-                        <Typography
-                          variant="caption"
-                          sx={{ fontWeight: "bold" }}
-                        >
-                          X
-                        </Typography>
-                      </TableCell>
-                      {StandardGroups.map((group) => (
-                        <TableCell
-                          sx={{
-                            width: "min-content",
-                            backgroundColor: group.values.includes(
-                              ResistanceValue
-                            )
-                              ? "rgba(255, 255, 255, 0.12)"
-                              : "transparent",
-                            alignItems: "center",
-                            justifyContent: "flex-end",
-                          }}
-                          key={`opposingValueHeader_${group.label}`}
-                          align="center"
-                        >
-                          <Stack direction="column" spacing={0}>
-                            {group.label
-                              .replace("-", " to ")
-                              .split(" ")
-                              .map((word) => (
-                                <Typography
-                                  variant="caption"
-                                  key={`opposingValueHeader_${group.label}_${word}`}
-                                  sx={{ fontWeight: "bold" }}
-                                >
-                                  {word}
-                                </Typography>
-                              ))}
-                          </Stack>
+                  <Table
+                    sx={{ minWidth: 700, tableLayout: "fixed" }}
+                    aria-label="Result Table"
+                    size="small"
+                    padding="none"
+                  >
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ width: "min-content" }}>
+                          &nbsp;
                         </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {ResultTableGroups.map((_g, rowIndex) =>
-                      getResultTableRow(rowIndex)
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                        <TableCell sx={{ width: "min-content" }} align="center">
+                          <Typography
+                            variant="caption"
+                            sx={{ fontWeight: "bold" }}
+                          >
+                            X
+                          </Typography>
+                        </TableCell>
+                        {StandardGroups.map((group) => (
+                          <TableCell
+                            sx={{
+                              width: "min-content",
+                              backgroundColor: group.values.includes(
+                                ResistanceValue
+                              )
+                                ? "rgba(255, 255, 255, 0.12)"
+                                : "transparent",
+                              alignItems: "center",
+                              justifyContent: "flex-end",
+                            }}
+                            key={`opposingValueHeader_${group.label}`}
+                            align="center"
+                          >
+                            <Stack direction="column" spacing={0}>
+                              {group.label
+                                .replace("-", " to ")
+                                .split(" ")
+                                .map((word) => (
+                                  <Typography
+                                    variant="caption"
+                                    key={`opposingValueHeader_${group.label}_${word}`}
+                                    sx={{ fontWeight: "bold" }}
+                                  >
+                                    {word}
+                                  </Typography>
+                                ))}
+                            </Stack>
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {ResultTableGroups.map((_g, rowIndex) =>
+                        getResultTableRow(rowIndex)
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Stack>
             </Stack>
           </Stack>
         </Stack>
