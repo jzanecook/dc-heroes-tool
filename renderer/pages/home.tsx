@@ -1,11 +1,6 @@
 import React from "react";
 import Head from "next/head";
 import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -16,6 +11,11 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
 import electron from "electron";
 // import Link from '../components/Link';
 import { styled } from "@mui/material";
@@ -28,6 +28,15 @@ const Root = styled("div")(({ theme }) => {
 });
 
 import type * as CSS from "csstype";
+
+interface CombatManeuver {
+  id: string;
+  label: string;
+  ov: number;
+  minimumFlag?: boolean;
+  rv: number;
+  conflicts?: string[];
+}
 
 interface ExtraCSSTypes extends CSS.Properties {
   WebkitAppRegion?: string;
@@ -150,6 +159,7 @@ function Home() {
   const [ActingRoll, setActingRoll] = React.useState(0);
   const [EffectValue, setEffectValue] = React.useState(0);
   const [ResistanceValue, setResistanceValue] = React.useState(0);
+  const [CombatManeuvers, setCombatManeuvers] = React.useState<string[]>([]);
 
   const StandardGroups = [
     { label: "0", values: [0] },
@@ -216,6 +226,334 @@ function Home() {
     },
   ];
 
+  const combatManeuvers: CombatManeuver[] = [
+    {
+      id: "critblow",
+      label: "Critical Blow",
+      ov: 2,
+      rv: -2,
+    },
+    {
+      id: "devastating",
+      label: "Devastating Attack",
+      ov: 4,
+      rv: -6,
+    },
+    {
+      id: "flailing",
+      label: "Flailing Attack",
+      ov: -2,
+      rv: +3,
+    },
+    {
+      id: "grappling",
+      label: "Grappling Attack",
+      ov: 0,
+      rv: 0,
+    },
+    {
+      id: "multiattack2",
+      label: "Multi-Attack on 2",
+      ov: 1,
+      rv: 1,
+      conflicts: [
+        "multiattack34",
+        "multiattack58",
+        "multiattack915",
+        "multiattack1630",
+        "multiattack3160",
+        "multiattack61125",
+      ],
+    },
+    {
+      id: "multiattack34",
+      label: "Multi-Attack on 3-4",
+      ov: 2,
+      rv: 2,
+      conflicts: [
+        "multiattack2",
+        "multiattack58",
+        "multiattack915",
+        "multiattack1630",
+        "multiattack3160",
+        "multiattack61125",
+      ],
+    },
+    {
+      id: "multiattack58",
+      label: "Multi-Attack on 5-8",
+      ov: 3,
+      rv: 3,
+      conflicts: [
+        "multiattack2",
+        "multiattack34",
+        "multiattack915",
+        "multiattack1630",
+        "multiattack3160",
+        "multiattack61125",
+      ],
+    },
+    {
+      id: "multiattack915",
+      label: "Multi-Attack on 9-15",
+      ov: 4,
+      rv: 4,
+      conflicts: [
+        "multiattack2",
+        "multiattack34",
+        "multiattack58",
+        "multiattack1630",
+        "multiattack3160",
+        "multiattack61125",
+      ],
+    },
+    {
+      id: "multiattack1630",
+      label: "Multi-Attack on 16-30",
+      ov: 5,
+      rv: 5,
+      conflicts: [
+        "multiattack2",
+        "multiattack34",
+        "multiattack58",
+        "multiattack915",
+        "multiattack3160",
+        "multiattack61125",
+      ],
+    },
+    {
+      id: "multiattack3160",
+      label: "Multi-Attack on 31-60",
+      ov: 6,
+      rv: 6,
+      conflicts: [
+        "multiattack2",
+        "multiattack34",
+        "multiattack58",
+        "multiattack915",
+        "multiattack1630",
+        "multiattack61125",
+      ],
+    },
+    {
+      id: "multiattack61125",
+      label: "Multi-Attack on 61-125",
+      ov: 7,
+      rv: 7,
+      conflicts: [
+        "multiattack2",
+        "multiattack34",
+        "multiattack58",
+        "multiattack915",
+        "multiattack1630",
+        "multiattack3160",
+      ],
+    },
+    {
+      id: "sweep",
+      label: "Sweep Attack",
+      ov: -1,
+      rv: -1,
+    },
+    {
+      id: "teamattack2",
+      label: "Team Attack by 2",
+      ov: -1,
+      rv: 0,
+      conflicts: ["teamattack34", "teamattack58", "teamattack9plus"],
+    },
+    {
+      id: "teamattack34",
+      label: "Team Attack by 3-4",
+      ov: -2,
+      rv: 0,
+      conflicts: ["teamattack2", "teamattack58", "teamattack9plus"],
+    },
+    {
+      id: "teamattack58",
+      label: "Team Attack by 5-8",
+      ov: -3,
+      rv: 0,
+      conflicts: ["teamattack2", "teamattack34", "teamattack9plus"],
+    },
+    {
+      id: "teamattack9plus",
+      label: "Team Attack by 9+",
+      ov: -4,
+      rv: 0,
+      conflicts: ["teamattack2", "teamattack34", "teamattack58"],
+    },
+    {
+      id: "pullingpunch",
+      label: "Pulling a Punch",
+      ov: 0,
+      rv: 1,
+    },
+    {
+      id: "plannedknockback",
+      label: "Planned Knockback",
+      ov: 0,
+      rv: 0,
+    },
+    {
+      id: "chargingattack",
+      label: "Charging Attack",
+      ov: 0,
+      rv: 0,
+    },
+    {
+      id: "takeaway",
+      label: "Takeaway",
+      ov: 2,
+      rv: 1,
+    },
+    {
+      id: "trickshot",
+      label: "Trickshot",
+      ov: 2,
+      minimumFlag: true,
+      rv: 0,
+    },
+    {
+      id: "blockhand",
+      label: "Block (Human Hand)",
+      ov: 1,
+      rv: 1,
+      conflicts: [
+        "blocksmallshield",
+        "blockgarbagecanlid",
+        "blockdesksmalltable",
+        "blockdoor",
+        "blockautomobile",
+        "blocksemitruck",
+        "blockhouse",
+      ],
+    },
+    {
+      id: "blocksmallshield",
+      label: "Block (Small Shield)",
+      ov: 0,
+      rv: 0,
+      conflicts: [
+        "blockhand",
+        "blockgarbagecanlid",
+        "blockdesksmalltable",
+        "blockdoor",
+        "blockautomobile",
+        "blocksemitruck",
+        "blockhouse",
+      ],
+    },
+    {
+      id: "blockgarbagecanlid",
+      label: "Block (Garbage Can Lid)",
+      ov: -1,
+      rv: -1,
+      conflicts: [
+        "blockhand",
+        "blocksmallshield",
+        "blockdesksmalltable",
+        "blockdoor",
+        "blockautomobile",
+        "blocksemitruck",
+        "blockhouse",
+      ],
+    },
+    {
+      id: "blockdesksmalltable",
+      label: "Block (Desk, Small Table)",
+      ov: -2,
+      rv: -2,
+      conflicts: [
+        "blockhand",
+        "blocksmallshield",
+        "blockgarbagecanlid",
+        "blockdoor",
+        "blockautomobile",
+        "blocksemitruck",
+        "blockhouse",
+      ],
+    },
+    {
+      id: "blockdoor",
+      label: "Block (Door)",
+      ov: -3,
+      rv: -3,
+      conflicts: [
+        "blockhand",
+        "blocksmallshield",
+        "blockgarbagecanlid",
+        "blockdesksmalltable",
+        "blockautomobile",
+        "blocksemitruck",
+        "blockhouse",
+      ],
+    },
+    {
+      id: "blockautomobile",
+      label: "Block (Automobile)",
+      ov: -4,
+      rv: -4,
+      conflicts: [
+        "blockhand",
+        "blocksmallshield",
+        "blockgarbagecanlid",
+        "blockdesksmalltable",
+        "blockdoor",
+        "blocksemitruck",
+        "blockhouse",
+      ],
+    },
+    {
+      id: "blocksemitruck",
+      label: "Block (Semi Truck)",
+      ov: -5,
+      rv: -5,
+      conflicts: [
+        "blockhand",
+        "blocksmallshield",
+        "blockgarbagecanlid",
+        "blockdesksmalltable",
+        "blockdoor",
+        "blockautomobile",
+        "blockhouse",
+      ],
+    },
+    {
+      id: "blockhouse",
+      label: "Block (House)",
+      ov: -6,
+      rv: -6,
+      conflicts: [
+        "blockhand",
+        "blocksmallshield",
+        "blockgarbagecanlid",
+        "blockdesksmalltable",
+        "blockdoor",
+        "blockautomobile",
+        "blocksemitruck",
+      ],
+    },
+    {
+      id: "dodge",
+      label: "Dodge",
+      ov: 1,
+      rv: 0,
+    },
+    {
+      id: "pressingattack",
+      label: "Pressing The Attack",
+      ov: -1,
+      rv: 0,
+    },
+    {
+      id: "layingback",
+      label: "Laying Back",
+      ov: +1,
+      rv: 0,
+    },
+  ];
+
   const getActingValueIndex = (actingValue: number) => {
     return StandardGroups.findIndex((group) =>
       group.values.includes(actingValue)
@@ -268,6 +606,10 @@ function Home() {
       .map((v, i) => v <= ActingRoll && i)
       .filter((v) => !!v)
       .pop();
+
+    if (getOpposingValueIndex(OpposingValue) < 0) {
+      return -1;
+    }
 
     const opposingRollThreshold =
       StandardGroups[getOpposingValueIndex(OpposingValue)].values;
@@ -333,19 +675,21 @@ function Home() {
     if (RAPs === 9999) {
       return 9999;
     }
-    if (RAPs === -1) {
+    if (RAPs === -1 || effectIndex - 1 < 0) {
       return -1;
     }
 
     if (ResistanceValue === 0) {
-      return `A + ${RAPs} (${EffectValue + RAPs})})`;
+      return `A + ${RAPs} (${EffectValue + RAPs})`;
     }
 
     return resistanceIndex - RAPs === 0
       ? "A"
       : resistanceIndex - RAPs < 0
-      ? `A + ${Math.abs(resistanceIndex - RAPs)} (${EffectValue + Math.abs(resistanceIndex - RAPs)})`
-      : ResultTableGroups[effectIndex].values[resistanceIndex - RAPs - 1] ??
+      ? `A + ${Math.abs(resistanceIndex - RAPs)} (${
+          EffectValue + Math.abs(resistanceIndex - RAPs)
+        })`
+      : ResultTableGroups[effectIndex - 1].values[resistanceIndex - RAPs - 1] ??
         "N";
 
     return (
@@ -425,7 +769,7 @@ function Home() {
         <TableCell
           sx={{
             width: "min-content",
-            backgroundColor: StandardGroups[rowIndex].values.includes(
+            backgroundColor: StandardGroups[rowIndex + 1].values.includes(
               EffectValue
             )
               ? "rgba(255, 255, 255, 0.12)"
@@ -439,13 +783,13 @@ function Home() {
             variant="caption"
             sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}
           >
-            {StandardGroups[rowIndex].label}
+            {StandardGroups[rowIndex + 1].label}
           </Typography>
         </TableCell>
         <TableCell
           sx={{
             width: "min-content",
-            backgroundColor: StandardGroups[rowIndex].values.includes(
+            backgroundColor: StandardGroups[rowIndex + 1].values.includes(
               EffectValue
             )
               ? "rgba(255, 255, 255, 0.12)"
@@ -460,7 +804,7 @@ function Home() {
           sx={{
             width: "min-content",
             backgroundColor:
-              StandardGroups[rowIndex].values.includes(EffectValue) ||
+              StandardGroups[rowIndex + 1].values.includes(EffectValue) ||
               ResistanceValue === 0
                 ? "rgba(255, 255, 255, 0.12)"
                 : "transparent",
@@ -475,9 +819,9 @@ function Home() {
             sx={{
               width: "min-content",
               backgroundColor:
-                StandardGroups[rowIndex].values.includes(EffectValue) ||
+                StandardGroups[rowIndex + 1].values.includes(EffectValue) ||
                 StandardGroups[colIndex + 1].values.includes(ResistanceValue)
-                  ? StandardGroups[rowIndex].values.includes(EffectValue) &&
+                  ? StandardGroups[rowIndex + 1].values.includes(EffectValue) &&
                     StandardGroups[colIndex + 1].values.includes(
                       ResistanceValue
                     )
@@ -505,11 +849,13 @@ function Home() {
                 sx={{
                   width: "min-content",
                   backgroundColor:
-                    StandardGroups[rowIndex].values.includes(EffectValue) ||
+                    StandardGroups[rowIndex + 1].values.includes(EffectValue) ||
                     StandardGroups[colIndex + 1].values.includes(
                       ResistanceValue
                     )
-                      ? StandardGroups[rowIndex].values.includes(EffectValue) &&
+                      ? StandardGroups[rowIndex + 1].values.includes(
+                          EffectValue
+                        ) &&
                         StandardGroups[colIndex + 1].values.includes(
                           ResistanceValue
                         )
@@ -574,6 +920,44 @@ function Home() {
     );
   };
 
+  // const videos = [
+  //   "/video/aquaman.webm",
+  //   "/video/atomsmasher.webm",
+  //   "/video/batman.webm",
+  //   "/video/batman+wonderwoman.webm",
+  //   "/video/blackadam.webm",
+  //   "/video/blackmanta.mp4",
+  //   "/video/bloodsport.webm",
+  //   "/video/cyborg.webm",
+  //   "/video/cyclone.webm",
+  //   "/video/darkseid.webm",
+  //   "/video/deadshot.webm",
+  //   "/video/doctorfate.webm",
+  //   "/video/flash.webm",
+  //   "/video/harleyquinn.webm",
+  //   "/video/hawkman.webm",
+  //   "/video/katana.webm",
+  //   "/video/mera.webm",
+  //   "/video/rasalghul.mp4",
+  //   "/video/steppenwolf.webm",
+  //   "/video/superman.webm",
+  //   "/video/wonderwoman.webm",
+  // ];
+
+  // const [video, setVideo] = React.useState(0);
+
+  // const skipVideo = () => {
+  //   if (video + 1 >= videos.length) {
+  //     setVideo(0);
+  //   } else {
+  //     setVideo(video + 1);
+  //   }
+
+  //   let videoPlayer = document.getElementById("bgvid") as HTMLVideoElement;
+  //   videoPlayer.src = videos[video];
+  //   videoPlayer.play();
+  // };
+
   return (
     <React.Fragment>
       <Head>
@@ -613,6 +997,7 @@ function Home() {
           autoPlay
           loop
           muted
+          id="bgvid"
           style={{
             position: "absolute",
             zIndex: "-2",
@@ -624,7 +1009,8 @@ function Home() {
             transform: "translate(-50%, -50%)",
           }}
         >
-          <source src="/video/live_bg.webm" type="video/webm" />
+          {/* <source src={videos[video]} type="video/webm" /> */}
+          <source src={'/video/live_bg.webm'} type="video/webm" />
         </video>
         <Stack
           direction="column"
@@ -634,12 +1020,77 @@ function Home() {
           sx={{}}
         >
           <Stack direction="column" spacing={2}>
+            {/* <Button onClick={() => skipVideo()}>Skip Video</Button> */}
             <Stack direction="column" spacing={1} width={1} p={2}>
               <Stack
                 direction={{ md: "column", lg: "row" }}
                 spacing={1}
                 width={1}
               >
+                <Paper>
+                  <Stack
+                    direction="column"
+                    justifyContent="space-between"
+                    spacing={2}
+                    width={1}
+                    p={1}
+                  >
+                    <Stack
+                      direction="column"
+                      spacing={1}
+                      sx={{ flexGrow: 1, minWidth: 500 }}
+                    >
+                      <Typography variant="subtitle1">
+                        Combat Maneuvers (Not Implemented)
+                      </Typography>
+                      <FormControl>
+                        <InputLabel id="combat-maneuver-label">
+                          Combat Maneuvers
+                        </InputLabel>
+                        <Select
+                          id="combat-maneuver"
+                          multiple
+                          value={CombatManeuvers}
+                          onChange={(e) =>
+                            setCombatManeuvers(
+                              typeof e.target.value === "string"
+                                ? e.target.value.split(",")
+                                : e.target.value
+                            )
+                          }
+                          input={<OutlinedInput label="Combat Maneuvers" />}
+                          renderValue={(selected) => (
+                            <Stack direction="column">
+                              {selected.map((s) => (
+                                <ManeuverDisplay
+                                  maneuver={combatManeuvers.find(
+                                    (m) => m.id === s
+                                  )}
+                                />
+                              ))}
+                            </Stack>
+                          )}
+                        >
+                          {combatManeuvers.map((maneuver) => (
+                            <MenuItem
+                              key={maneuver.id}
+                              value={maneuver.id}
+                              disabled={
+                                maneuver.conflicts &&
+                                maneuver.conflicts.some((conflict) =>
+                                  CombatManeuvers.includes(conflict)
+                                )
+                              }
+                            >
+                              <ManeuverDisplay maneuver={maneuver} />
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <Stack direction="row"></Stack>
+                    </Stack>
+                  </Stack>
+                </Paper>
                 <Paper>
                   <Stack
                     direction="column"
@@ -786,14 +1237,14 @@ function Home() {
                       />
                     </Stack>
                     <Stack
-                        direction="row"
-                        spacing={6}
-                        width={1}
-                        justifyContent="center"
-                        alignItems="center"
-                        sx={{
-                          flex: 1,
-                        }}
+                      direction="row"
+                      spacing={6}
+                      width={1}
+                      justifyContent="center"
+                      alignItems="center"
+                      sx={{
+                        flex: 1,
+                      }}
                     >
                       {getResultRollValue() === 9999 ? (
                         <Typography variant="body2" gutterBottom color="error">
@@ -962,3 +1413,23 @@ function Home() {
 }
 
 export default Home;
+const ManeuverDisplay = ({ maneuver }: { maneuver: CombatManeuver }) => {
+  return (
+    <Stack direction="row" width={1} justifyContent="space-between">
+      <Typography variant="body1">
+        {maneuver.label}
+        {maneuver?.minimumFlag && <i>&nbsp;minimum</i>}
+      </Typography>
+      <Stack direction="row" spacing={6}>
+        <Typography variant="body1">
+          <small>OV:</small> {maneuver.ov < 0 ? "" : "+"}
+          {maneuver.ov}
+        </Typography>
+        <Typography variant="body1">
+          <small>RV:</small> {maneuver.rv < 0 ? "" : "+"}
+          {maneuver.rv}
+        </Typography>
+      </Stack>
+    </Stack>
+  );
+};

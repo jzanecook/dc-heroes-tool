@@ -1,5 +1,5 @@
-appId: com.z90.dcheroes
-productName: DC Heroes Tool
+appId: com.z90.dcheroes-novid
+productName: DC Heroes Tool (No Video)
 copyright: Copyright © 2023 Z90 Studios
 directories:
   output: dist
@@ -10,3 +10,7 @@ files:
       - package.json
       - app
 publish: null
+win:
+  target: portable
+  icon: resources/icon.ico
+  publisherName: Z90 Studios

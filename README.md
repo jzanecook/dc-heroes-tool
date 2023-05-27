@@ -1,24 +1,14 @@
-<p align="center"><img src="https://i.imgur.com/flcMvDC.png"></p>
 
-## Usage
+# DC Heroes Tool
 
-### Create an App
+<p align="center"><img src="https://github.com/jzanecook/dc-heroes-tool/blob/7f87e92914cb95d4c286687756290cd4cb3a0ce8/renderer/public/images/logo.png?raw=true"></p>
 
-```
-# with npx
-$ npx create-nextron-app my-app --example with-material-ui
-
-# with yarn
-$ yarn create nextron-app my-app --example with-material-ui
-
-# with pnpx
-$ pnpx create-nextron-app my-app --example with-material-ui
-```
+## Designed for the DC Heroes 3rd edition TTRPG
 
 ### Install Dependencies
 
-```
-$ cd my-app
+```bash
+$ cd dc-heroes-tool
 
 # using yarn or npm
 $ yarn (or `npm install`)
@@ -29,10 +19,17 @@ $ pnpm install --shamefully-hoist
 
 ### Use it
 
-```
+```bash
 # development mode
 $ yarn dev (or `npm run dev` or `pnpm run dev`)
 
 # production build
-$ yarn build (or `npm run build` or `pnpm run build`)
+$ yarn build:win64 (or `npm run build:win64` or `pnpm run build:win64`)
 ```
+
+### TODO
+
+- [ ] Add Combat Maneuvers
+- [ ] Add Video Controls
+- [ ] Optimize Videos
+- [ ] Add a way to hide the UI and just watch the videos (with or without volume)
